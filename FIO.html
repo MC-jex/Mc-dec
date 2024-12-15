@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatZone con Números</title>
+    <style>
+        body {
+            font-family: Tahoma, sans-serif;
+            background-color: #e9ebee;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #3b5998;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 24px;
+        }
+        main {
+            margin: 20px auto;
+            max-width: 700px;
+            background-color: white;
+            border: 1px solid #d3d6db;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+        }
+        .chat-section {
+            display: none;
+        }
+        .message-form {
+            margin-top: 15px;
+        }
+        .message-form textarea {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccd0d5;
+            border-radius: 3px;
+            margin-bottom: 10px;
+        }
+        .message-form button {
+            padding: 10px 20px;
+            background-color: #4267b2;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .message-form button:hover {
+            background-color: #365899;
+        }
+        .messages {
+            border: 1px solid #ccd0d5;
+            border-radius: 3px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .message {
+            border-bottom: 1px solid #d3d6db;
+            padding: 5px 0;
+        }
+        .message:last-child {
+            border-bottom: none;
+        }
+        .message strong {
+            color: #3b5998;
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        ChatZone con Números
+    </header>
+    <main>
+        <div id="loginSection">
+            <h2>Conéctate con tu Número</h2>
+            <input type="text" id="phoneInput" placeholder="Escribe tu número de teléfono">
+            <button id="connectButton">Conectar</button>
+        </div>
+        <div id="chatSection" class="chat-section">
+            <div id="chatHeader">
+                <h3 id="userPhone"></h3>
+            </div>
+            <div class="messages" id="messageList"></div>
+            <div class="message-form">
+                <textarea id="messageInput" placeholder="Escribe tu mensaje..."></textarea>
+                <button id="sendMessageButton">Enviar</button>
+            </div>
+        </div>
+    </main>
+    <footer>
+        &copy; 2024 ChatZone. Inspirado en los inicios de las redes sociales.
+    </footer>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        const loginSection = document.getElementById('loginSection');
+        const chatSection = document.getElementById('chatSection');
+        const phoneInput = document.getElementById('phoneInput');
+        const connectButton = document.getElementById('connectButton');
+        const userPhone = document.getElementById('userPhone');
+        const messageList = document.getElementById('messageList');
+        const messageInput = document.getElementById('messageInput');
+        const sendMessageButton = document.getElementById('sendMessageButton');
+
+        let currentPhone = '';
+
+        connectButton.addEventListener('click', () => {
+            const phone = phoneInput.value.trim();
+            if (phone) {
+                currentPhone = phone;
+                userPhone.textContent = `Conectado como: ${currentPhone}`;
+                loginSection.style.display = 'none';
+                chatSection.style.display = 'block';
+
+                // Notificar conexión al servidor
+                socket.emit('join', currentPhone);
+            } else {
+                alert('Por favor, escribe un número de teléfono válido.');
+            }
+        });
+
+        sendMessageButton.addEventListener('click', () => {
+            const message = messageInput.value.trim();
+            if (message) {
+                // Enviar mensaje al servidor
+                socket.emit('message', { from: currentPhone, text: message });
+
+                // Agregar mensaje al chat local
+                addMessage(`Tú: ${message}`);
+                messageInput.value = '';
+            }
+        });
+
+        socket.on('message', (data) => {
+            addMessage(`${data.from}: ${data.text}`);
+        });
+
+        function addMessage(text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            messageDiv.textContent = text;
+            messageList.appendChild(messageDiv);
+            messageList.scrollTop = messageList.scrollHeight; // Desplazar hacia abajo
+        }
+    </script>
+</body>
+</html>
